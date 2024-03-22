@@ -25,3 +25,15 @@ This repo holds all the codes that was involved in the Research Project.
 # ATTENTION USERS !! -->
 
 - _Note that with more dimensions/ more complex limit states/ more conservative stopping criteria, the training or Pf computation can prolong and be computationally intensive, especially for AKMCS model. To paint a picture, for the high dimension problem, a limit state of Y<0 which is expected to have a probability of occurence around 1.6e-3 to 2e-3 was too intense to execute using the AKMCS model on an **Intel i5 1035G1 CPU @ 1 GHz with 8 Gb RAM** which however ran seamlessly using the AKMCS and KPLS models. Hence trying to do so on a machine with limited computation capacity will crash the system leading to a forced shut down and loss of unsaved data._
+
+**_Commercial package credits_**
+
+_OpenTURNS: An Industrial Software for Uncertainty Quantification in Simulation;Handbook of Uncertainty Quantification,
+https://doi.org/10.1007/978-3-319-11259-6_64-1_
+https://openturns.github.io/openturns/latest/index.html
+
+_Paul Saves, Rémi Lafage, Nathalie Bartoli, Youssef Diouane, Jasper Bussemaker, Thierry Lefebvre, John T. Hwang, Joseph Morlier,
+Joaquim R.R.A. Martins, SMT 2.0: A Surrogate Modeling Toolbox with a focus on hierarchical and mixed variables Gaussian
+processes, Advances in Engineering Software, Volume 188, 2024, 103571, ISSN 0965-9978, https://doi.org/10.1016/j.
+advengsoft.2023.103571. (https://www.sciencedirect.com/science/article/pii/S096599782300162X)_
+https://smt.readthedocs.io/en/latest/_src_docs/surrogate_models/kpls.html
