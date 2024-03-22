@@ -16,9 +16,13 @@ import matplotlib.pyplot as plt
 from smt.surrogate_models import KPLS
 
 
+"""Learning criteria 1 to help find out the best value of input to add to DoE to do an enrichment"""
+
 def U_criterion(y, MSE):
     return np.abs(y) / np.sqrt(MSE)
 
+
+"""Learning criteria 2 to help find out the best value of input to add to DoE to do an enrichment"""
 
 def EFF_criterion(y, MSE):
     # search of the best learning point x_star among the MC population using the EFF criterion
@@ -37,6 +41,9 @@ def EFF_criterion(y, MSE):
     return EFF
 
 
+""" Returns the concerned learning criteria and checks if sample size enrichment is required or not"""
+
+
 def exploration(y, MSE, cv_Pf, stop='U', cov_max=0.05):
     need_learning = False
     need_enriching = False
@@ -53,18 +60,11 @@ def exploration(y, MSE, cv_Pf, stop='U', cov_max=0.05):
 
 def calculate_importance_weight(x, original_dist, importance_dist):
     """
-    Calculate the importance weight for a given point based on two multivariate normal distributions.
-
-    Parameters:
-    - x: The point at which to evaluate the importance weight.
-    - initial_mean: The mean vector of the initial distribution.
-    - initial_covariance: The covariance matrix of the initial distribution.
-    - importance_mean: The mean vector of the importance distribution.
-    - importance_covariance: The covariance matrix of the importance distribution.
-
+     Calculate the importance weight for a given point based on two multivariate normal distributions.
     Returns:
-    - importance_weight: The importance weight at the given point.
+    importance_weight: The importance weight at the given point.
     """
+    
     initial_pdf = original_dist.computePDF(x)
     importance_pdf = importance_dist.computePDF(x)
 
@@ -74,6 +74,9 @@ def calculate_importance_weight(x, original_dist, importance_dist):
 
     importance_weight = initial_pdf / importance_pdf
     return importance_weight
+
+
+""" Main function including the Pf calculation and training of the metamodel"""
 
 
 def Vb_AGP(mu1, mu2, cov, performance_function, initial_distribution, distribution_chosen, inputSample,
@@ -90,19 +93,16 @@ def Vb_AGP(mu1, mu2, cov, performance_function, initial_distribution, distributi
         # initial MC population
         IS_sample_size = int(initial_IS_sample_size)
         ImportaneSamples = np.array(distribution_chosen.getSample(IS_sample_size))
-        # ImportaneSamples = ImportaneSamples.transpose()
-        # print(ImportaneSamples)
+     
         # initial DoE generation
         lhs = ot.MonteCarloExperiment(initial_distribution, initial_doe_size)
-        # sample, weight = lhs.generateWithWeights()
-
         DoE = np.array(lhs.generate())
-        # DoE = np.array(inputSample)
-        # DoE_size = DoE.shape[0]
+   
         # inital DoE evaluation
         print("--------------------------------------")
         print("Evalulation of the perfomance function on the initial doe of size ", initial_doe_size)
         print("--------------------------------------")
+        
         # Evaluation of the performance function - deflection of cantilever beam
         Y = np.zeros((initial_doe_size, 1))
         i = 0
@@ -168,7 +168,12 @@ def Vb_AGP(mu1, mu2, cov, performance_function, initial_distribution, distributi
     thetaL = np.array([1e-6] * stochastic_dim)
     thetaU = np.array([100.0] * stochastic_dim)
     gp_g = GaussianProcess(corr=corr, theta0=theta0, thetaL=thetaL, thetaU=thetaU)
-    # Vb-AGP loop
+               
+
+    """
+    Vb-AGP loop ------------->
+    """
+               
     n_iter = 0
     convergence = False
     n_iter = 1
@@ -199,6 +204,7 @@ def Vb_AGP(mu1, mu2, cov, performance_function, initial_distribution, distributi
     while n_iter < iter_max and (need_learning or need_enriching):
         print("______________________________________________________________________________")
         print("iter =", n_iter)
+        
         # Global prediction
         t1 = time.time()
         y_glob_kpls = sm.predict_values(ImportaneSamples)
@@ -215,17 +221,17 @@ def Vb_AGP(mu1, mu2, cov, performance_function, initial_distribution, distributi
         # Weight calculation part
         weights = []
         norm_imp_weights = []
+        
         for n in range(0, np.size(y_glob)):
-            # print("Weight iteration",n)
-            # print(ImportaneSamples[n])
             weights.append(calculate_importance_weight(ImportaneSamples[n], initial_distribution, distribution_chosen))
-        # print(weights)
+
         for j in range(0, np.size(y_glob)):
             if y_glob_kpls[j] > 0.21:
                 indicatrice_glob[j] = 1 * weights[j]
-        # indicatrice_glob = (1-np.sign(y_glob))/2
+        
         Pf.append(np.sum(indicatrice_glob) / ImportaneSamples.shape[0])
         print("Pf=", Pf)
+        
         if Pf[i] > 0.0:
             cv_Pf.append(np.sqrt(np.var(indicatrice_glob) / ImportaneSamples.shape[0] / Pf[i]))
             t2 = time.time()
@@ -235,6 +241,7 @@ def Vb_AGP(mu1, mu2, cov, performance_function, initial_distribution, distributi
                                                                            stop=learning_function, cov_max=cv_max)
             print(np.size(improve_criterion))
             print("Convergence max = " + str(improve_criterion.max()))
+            
             if need_learning:  # Enriching DOE
                 which_x_to_add = np.argmax(improve_criterion)
                 val_star = improve_criterion[which_x_to_add]
@@ -246,19 +253,20 @@ def Vb_AGP(mu1, mu2, cov, performance_function, initial_distribution, distributi
                 Y_train = np.hstack([Y_train, y_star])
                 sm.set_training_values(X_train, Y_train)
                 sm.train()
+                
             elif need_enriching:  # Enriching MC
                 new_MC = np.array(distribution_chosen.getSample(IS_sample_size))
-                # new_MC = new_MC.transpose()
                 ImportaneSamples_candidates = np.vstack([ImportaneSamples_candidates, new_MC])
                 ImportaneSamples = np.vstack([ImportaneSamples, new_MC])
                 print("Enriching MC")
+                
             else:
                 print("Done")
+                
         n_iter += 1
         i += 1
+        
     list_res.append(np.array([Pf, var_X_E_G_l, var_G_E_X_l, improve_criterion.max()],dtype=object))
-    # print(Pf)
-    # print(cv_Pf)
     return Pf, X_train, n_iter, gp_g, Y_train, ImportaneSamples.shape[0], cv_Pf, sm
 
 
@@ -267,26 +275,22 @@ def cbeam(X):
     return disp
 
 
-##### Distributions
+"""Distributions"""
 
 stochastic_dim = 4
 
 path = ''
 
+
+"""Loading the cantilever beam problem from OpenTurns""" 
+
 cb = cantilever_beam.CantileverBeam()
 distribution = cb.distribution
-# print(type(distribution))
 model = cb.model
 E_distribution = ot.Beta(0.9, 3.5, 65.0e9, 75.0e9)
 F_distribution = ot.LogNormalMuSigma()([300.0, 30.0, 0.0])
 L_distribution = ot.Uniform(2.5, 2.6)
 I_distribution = ot.Beta(2.5, 4.0, 1.3e-7, 1.7e-7)
-
-fct_test = cbeam
-distrib_test = distribution
-initial_doe_size = 16
-initial_IS_sample_size = 100
-cov_max = 0.05
 
 # IS additions
 
@@ -294,6 +298,7 @@ cov_max = 0.05
 vect = ot.RandomVector(distribution)
 G = ot.CompositeRandomVector(model, vect)
 event = ot.ThresholdEvent(G, ot.Greater(), 0.21)
+
 # FORM configuration
 optimAlgo = ot.Cobyla()
 optimAlgo.setMaximumEvaluationNumber(300)
@@ -301,14 +306,16 @@ optimAlgo.setMaximumAbsoluteError(1.0e-10)
 optimAlgo.setMaximumRelativeError(1.0e-10)
 optimAlgo.setMaximumResidualError(1.0e-10)
 optimAlgo.setMaximumConstraintError(1.0e-10)
+
 # FORM analysis
 algo = ot.FORM(optimAlgo, event, distribution.getMean())
 algo.run()
 result = algo.getResult()
+
 # Printing results
 standardSpaceDesignPoint = result.getStandardSpaceDesignPoint()
 physicalSpaceDesignPoint = result.getPhysicalSpaceDesignPoint()
-print(physicalSpaceDesignPoint)
+
 # Standard Gaussian centered around SPDP-standardSpaceDesignPoint
 dimension = distribution.getDimension()
 mu = np.array(distribution.getMean())
@@ -317,14 +324,11 @@ cov = distribution.getCovariance()
 importanceDistribution = ot.Normal(mu, cov)
 importanceDistribution.setMean(physicalSpaceDesignPoint)
 
-# InputSamples to build Initial DoE for Kriging meta model
-result1 = result.getOptimizationResult()
-inputSampleComplete = result1.getInputSample()
-inputSampleTrunc = np.zeros((16, 4))
-for i in range(0, 16, 1):
-    for j in range(0, 4, 1):
-        inputSampleTrunc[i][j] = inputSampleComplete[i][j]
-
+fct_test = cbeam
+distrib_test = distribution
+initial_doe_size = 16
+initial_IS_sample_size = 100
+cov_max = 0.05
 distrib_test = importanceDistribution
 
 # CDF (No scaling needed)
@@ -347,6 +351,9 @@ PF, DoE, n_iter, gp_g, Y, IS_sample_size, cov_tot, sm = Vb_AGP(mu, physicalSpace
 end_time = time.time()
 total_time = end_time - start_time
 
+
+""" FINAL RESULTS PRINTING """
+
 print(n_iter)
 size = len(PF)
 print(size)
@@ -365,10 +372,12 @@ print("Variance=", var)
 
 print(f"total time taken is : {total_time}")
 
+
+""" Pf VALUES PLOTTING """
+
 plt.title('Failure Probability Vs Number of iterations of KPLS-IS')
 plt.xlabel('Number of iterations of KPLS-IS')
 plt.ylabel('Failure Probability (Pf)')
-# plt.ylim(0.025, 0.05)
 plt.plot(num_iter, PF, label="Mean")
 plt.plot(num_iter, Pf_ub, label="Upper Bound")
 plt.plot(num_iter, Pf_lb, label="Lower Bound")
