@@ -16,8 +16,12 @@ import time
 from openturns.usecases import cantilever_beam
 import matplotlib.pyplot as plt
 
+"""Learning criteria 1 to help find out the best value of input to add to DoE to do an enrichment"""
+
 def U_criterion(y,MSE):
     return np.abs(y)/np.sqrt(MSE)
+
+"""Learning criteria 2 to help find out the best value of input to add to DoE to do an enrichment"""
 
 def EFF_criterion(y,MSE):
     # search of the best learning point x_star among the MC population using the EFF criterion 
@@ -33,6 +37,8 @@ def EFF_criterion(y,MSE):
     X2_pdf = sci.stats.norm.pdf(X2)
     EFF = y*(2.0*X_cdf-X1_cdf-X2_cdf)-np.sqrt(MSE)*(2.0*X_pdf-X1_pdf-X2_pdf)+epsilon*(X2_cdf-X1_cdf)
     return EFF
+
+""" Returns the concerned learning criteria and checks if sample size enrichment is required or not"""
 
 def exploration(y,MSE, cv_Pf, stop='EFF', cov_max = 0.05):
     need_learning = False
@@ -60,16 +66,18 @@ def Vb_AGP(m, sig, performance_function,distribution_chosen,initial_MC_sample_si
         #initial MC population
         MC_sample_size = int(initial_MC_sample_size)
         MC_sample = np.array(distribution_chosen.getSample(MC_sample_size))
-        #print(MC_sample)
+	    
         # initial DoE generation
         initial_doe_size = int(initial_doe_size)
         lhs = ot.MonteCarloExperiment(distribution_chosen, initial_doe_size)
         DoE=np.array(lhs.generate())
         DoE_size = DoE.shape[0]
+	    
         # inital DoE evaluation 
         print("--------------------------------------")
         print("Evalulation of the perfomance function on the initial doe of size ",initial_doe_size)
         print("--------------------------------------")
+	    
        # Evaluation of the performance function
         Y = np.zeros((initial_doe_size,1))
         i = 0
@@ -131,7 +139,10 @@ def Vb_AGP(m, sig, performance_function,distribution_chosen,initial_MC_sample_si
     thetaL = np.array([1e-6]*stochastic_dim)
     thetaU = np.array([100.0]*stochastic_dim)
     gp_g = GaussianProcess(corr=corr,theta0 = theta0,thetaL=thetaL,thetaU=thetaU)     
-    #Vb-AGP loop
+	
+    """
+    Vb-AGP loop ------------->
+    """    
     n_iter = 0
     convergence = False
     n_iter = 1
@@ -140,7 +151,10 @@ def Vb_AGP(m, sig, performance_function,distribution_chosen,initial_MC_sample_si
     need_learning = True
     need_enriching = True
     MC_sample_candidates = MC_sample.copy()
+	
+    '''KRIGING METAMODEL PART'''
     gp_g.fit(X_train, Y_train)
+	
     cv_max = 0.05
     list_res = list()
     i = 0
@@ -151,19 +165,19 @@ def Vb_AGP(m, sig, performance_function,distribution_chosen,initial_MC_sample_si
     while n_iter<iter_max and (need_learning or need_enriching):
         print("______________________________________________________________________________")
         print ("iter =", n_iter)
+	    
         # Global prediction
         t1 = time.time()
         y_glob,MSE_glob = gp_g.predict(MC_sample,eval_MSE=True)
         y_pred,MSE_pred = gp_g.predict(MC_sample_candidates,eval_MSE=True)
-        #print(np.transpose(y_pred))
+	    
         MSE_pred = MSE_pred.reshape(np.size(MSE_pred), 1)
         indicatrice_glob=np.zeros(np.size(y_glob))
-        #print(indicatrice_glob)
+	    
         for j in range(0, np.size(y_glob)):
             if y_glob[j] < 1:
                 indicatrice_glob[j] = 1
 
-        #print("indicatrice_glob", indicatrice_glob)
         Pf.append(np.sum(indicatrice_glob)/MC_sample.shape[0])
         print("Pf=", Pf)
 
@@ -173,6 +187,7 @@ def Vb_AGP(m, sig, performance_function,distribution_chosen,initial_MC_sample_si
             print("Pf = " + str(Pf[i]) + " CV = " + str(cv_Pf[i]) + " N_MC = " + str(MC_sample.shape[0]) + " DOE = " + str(X_train.shape[0]) + " Time: " + str(t2-t1))
             improve_criterion, need_learning, need_enriching = exploration(y_pred,MSE_pred,cv_Pf[i],stop=learning_function, cov_max=cv_max)
             print("Convergence max = " + str(improve_criterion.max()))
+		
             if need_learning: #Enriching DOE
                 which_x_to_add = np.argmax(improve_criterion)
                 val_star = improve_criterion[which_x_to_add]
@@ -183,13 +198,16 @@ def Vb_AGP(m, sig, performance_function,distribution_chosen,initial_MC_sample_si
                 X_train = np.vstack([X_train, np.atleast_2d(x_star)])
                 Y_train = np.vstack([Y_train,y_star])
                 gp_g.fit(X_train, Y_train)
+		    
             elif need_enriching: #Enriching MC
                 new_MC = np.array(distribution_chosen.getSample(MC_sample_size))
                 MC_sample_candidates = np.vstack([MC_sample_candidates, new_MC])
                 MC_sample = np.vstack([MC_sample, new_MC])
                 print("Enriching MC")
+		    
             else:
                 print("Done")
+		    
         elif Pf[i] == 0:
             cv_Pf.append(0)
             improve_criterion = EFF_criterion(y_pred, MSE_pred)
@@ -202,12 +220,13 @@ def Vb_AGP(m, sig, performance_function,distribution_chosen,initial_MC_sample_si
             Y_train = np.vstack([Y_train, y_star])
             gp_g.fit(X_train, Y_train)
             new_MC = np.array(distribution_chosen.getSample(MC_sample_size))
-            # new_MC = new_MC.transpose()
             MC_sample_candidates = np.vstack([MC_sample_candidates, new_MC])
             MC_sample = np.vstack([MC_sample, new_MC])
             print("Enriching MC")
+		
         n_iter += 1
         i = i + 1
+	    
     list_res.append(np.array([Pf,var_X_E_G_l, var_G_E_X_l,improve_criterion.max()], dtype=object))
     return Pf,X_train,n_iter,gp_g,Y_train,MC_sample.shape[0],cv_Pf
 
@@ -215,7 +234,7 @@ def limitfunc(X, m, sig):
     G = m + (3 * sig * (m ** 0.5)) - np.sum(X)
     return G
 
-##### Distributions 
+"""Distributions"""
 
 stochastic_dim = 40
 
@@ -224,13 +243,13 @@ sig = 0.2  # std deviation of the distribution
 temp_xvalues = np.ones(m)  # has no significance for the problem directly
 path = ''
 
-X_dist = ot.LogNormal()
+X_dist = ot.LogNormal()  # distribution of the random variable
 X_dist.setParameter(ot.LogNormalMuSigma()([1, 0.2, 0.0]))
 composed_dist = ot.ComposedDistribution([X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist, X_dist])
 distribution = composed_dist
 model = symboli_func(m, sig, temp_xvalues)
 
-fct_test = limitfunc
+fct_test = limitfunc  # limit state function 
 distrib_test=distribution
 initial_doe_size= 30
 initial_MC_sample_size=1000
@@ -242,24 +261,20 @@ Pf_lb = []
 var = []
 
 start_time = time.time()
-#for i in initial_doe_size:
+
 PF, DoE, n_iter, gp_g, Y, MC_sample_size, cov_tot = Vb_AGP(m, sig, fct_test, distrib_test, initial_MC_sample_size, initial_doe_size, path=path, cov_max=cov_max, corr='matern52')
-#Pf.append(PF)
+
 end_time = time.time()
 total_time = end_time - start_time
 
-#plt.title('Failure Probability Vs DoE size')
-#plt.xlabel('DoE Size')
-#plt.ylabel('Failure Probability (Pf)')
-#plt.ylim(0.01, 0.05)
-#plt.plot(initial_doe_size, Pf)
-#plt.show()
+""" FINAL RESULTS PRINTING """
 
 print(n_iter)
 size = len(PF)
 print(size)
 print("Pf=", PF)
 print("COV=", cov_tot)
+
 for i in range(0, size):
     var.append(((cov_tot[i] * PF[i])) ** 2)
     Pf_ub.append((PF[i] + 1.96 * np.sqrt(var[i])))
@@ -272,6 +287,9 @@ print("Pf_ub=", Pf_ub)
 print("Variance=", var)
 
 print(f"Total time taken is {total_time:.4f} seconds")
+
+""" Pf VALUES PLOTTING """
+
 plt.title('Failure Probability Vs Number of iterations of AK-MCS')
 plt.xlabel('Number of iterations of AK-MCS')
 plt.ylabel('Failure Probability (Pf)')
