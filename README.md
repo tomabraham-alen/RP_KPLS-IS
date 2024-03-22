@@ -3,17 +3,17 @@ This repo holds all the codes that was involved in the Research Project.
 
 # DESCRIPTION OF EACH FILE IN THE REPO -->
 
-* The code named << 40,100 linear - AKIS >> is the AKIS model that works on high dimensional problem which is scalable. By default it is set at 40 dimensions. The variable that holds the dimension value is << stochastic_dim >>.
-* The code named << 40,100 linear - KPLS >> is the KPLS model that works on high dimensional problem which is scalable too. The stopping criteria can be seen in the function named << exploration() >>. The code is built specifically for the problem in hand. While adapting the code to a new problem, take caution in modifying the stopping criteria which takes the standard deviation/ variance of the composed distribution. In the problem in hand, it is simpler since all the 40 random variables are sampled from the same kind of distribution.
-* The code named << 40,100 linear - main_AKMCS_U >> is the AKMCS model to run the high dimensional problem.
-* The code named << LowDim - AKIS >> is the AKIS model that works on the low dimensional Cantilever beam problem adopted from OpenTurns.
-* The code named << LowDim - KPLS >> is the KPLS model that works on the low dimensional problem.
-* The code named << LowDim - main_AKMCS_U >> is the AKMCS model that works on the same low dimensional problem.
-* The code named << gaussian_process >> is the code that handles the training of the GP surrogate. It is not advised to modify this code - ! DO NOT EDIT !
-* The code named << regression_models >> is one of the dependancies of the gaussian process code - ! DO NOT EDIT !
-* The code named << correlation_models >> is one of the dependancies of the gaussian process code - ! DO NOT EDIT !
-* The code named << Crude_MC >> is the Crude Monte Carlo simulation to estimate any probability. It is based on the Monte Carlo estimator inbuilt in OpenTurns.
-* The code named << create_symbolic_function >> is used to create the symbolic model for the FORM analysis. This is specific to the problem and is imported all the models at high dimension. While using the models for a new problem, this must be changed fully, in case you are working with analytical function.
+* The code named << **40,100 linear - AKIS** >> is the AKIS model that works on high dimensional problem which is scalable. By default it is set at 40 dimensions. The variable that holds the dimension value is << stochastic_dim >>.
+* The code named << **40,100 linear - KPLS** >> is the KPLS model that works on high dimensional problem which is scalable too. The stopping criteria can be seen in the function named << **exploration()** >>. The code is built specifically for the problem in hand. While adapting the code to a new problem, take caution in modifying the stopping criteria which takes the standard deviation/ variance of the composed distribution. In the problem in hand, it is simpler since all the 40 random variables are sampled from the same kind of distribution.
+* The code named << **40,100 linear - main_AKMCS_U** >> is the AKMCS model to run the high dimensional problem.
+* The code named << **LowDim - AKIS** >> is the AKIS model that works on the low dimensional Cantilever beam problem adopted from OpenTurns.
+* The code named << **LowDim - KPLS** >> is the KPLS model that works on the low dimensional problem.
+* The code named << **LowDim - main_AKMCS_U** >> is the AKMCS model that works on the same low dimensional problem.
+* The code named << **gaussian_process** >> is the code that handles the training of the GP surrogate. It is not advised to modify this code - ! DO NOT EDIT !
+* The code named << **regression_models** >> is one of the dependancies of the gaussian process code - ! DO NOT EDIT !
+* The code named << **correlation_models** >> is one of the dependancies of the gaussian process code - ! DO NOT EDIT !
+* The code named << **Crude_MC** >> is the Crude Monte Carlo simulation to estimate any probability. It is based on the Monte Carlo estimator inbuilt in OpenTurns.
+* The code named << **create_symbolic_function** >> is used to create the symbolic model for the FORM analysis. This is specific to the problem and is imported all the models at high dimension. While using the models for a new problem, this must be changed fully, in case you are working with analytical function.
 
 # RECOMMENDATIONS BEFORE YOU START WITH THE CODES -->
 
