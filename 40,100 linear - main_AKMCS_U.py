@@ -53,6 +53,9 @@ def exploration(y,MSE, cv_Pf, stop='EFF', cov_max = 0.05):
         need_enriching = cv_Pf>cov_max
     return improve_criterion, need_learning, need_enriching
 
+
+"""Main function with Pf computation and the model training"""
+
 def Vb_AGP(m, sig, performance_function,distribution_chosen,initial_MC_sample_size,initial_doe_size = None, learning_function = 'EFF',cov_max = 0.1, hot_start = False,path='',corr='matern52'):
     var_G_E_X_l=list()
     var_X_E_G_l=list()
@@ -162,6 +165,7 @@ def Vb_AGP(m, sig, performance_function,distribution_chosen,initial_MC_sample_si
     cv_Pf = []
 # In[15]:
     iter_max = 1000
+	
     while n_iter<iter_max and (need_learning or need_enriching):
         print("______________________________________________________________________________")
         print ("iter =", n_iter)
@@ -233,6 +237,7 @@ def Vb_AGP(m, sig, performance_function,distribution_chosen,initial_MC_sample_si
 def limitfunc(X, m, sig):
     G = m + (3 * sig * (m ** 0.5)) - np.sum(X)
     return G
+
 
 """Distributions"""
 
