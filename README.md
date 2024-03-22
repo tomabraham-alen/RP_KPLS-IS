@@ -24,5 +24,4 @@ This repo holds all the codes that was involved in the Research Project.
  
 _# ATTENTION USERS !! -->
 
-- Note that with more dimensions/ more complex limit states/ more conservative stopping criteria, the training or Pf computation can prolong and be computationally intensive, especially for AKMCS model. To paint a picture, for the high dimension problem, a limit state of Y<0 which is expected to have a probability of occurence around 1.6e-3 to 2e-3 was too intense to execute using the AKMCS model on an **Intel i5 1035G1 CPU @ 1 GHz with 8 Gb RAM** which however ran seamlessly using the AKMCS and KPLS models. 
-_
+- Note that with more dimensions/ more complex limit states/ more conservative stopping criteria, the training or Pf computation can prolong and be computationally intensive, especially for AKMCS model. To paint a picture, for the high dimension problem, a limit state of Y<0 which is expected to have a probability of occurence around 1.6e-3 to 2e-3 was too intense to execute using the AKMCS model on an **Intel i5 1035G1 CPU @ 1 GHz with 8 Gb RAM** which however ran seamlessly using the AKMCS and KPLS models._
